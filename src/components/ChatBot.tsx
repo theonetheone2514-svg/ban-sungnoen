@@ -1,25 +1,25 @@
 "use client";
 
 import { useState } from "react";
+import { MessageCircle, X, Send } from "lucide-react";
 import { useChat, ChatMessage } from "@/hooks/useChat";
 
 const VILLAGE_CONTEXT = `📍 ข้อมูลบ้านสูงเนิน (หมู่ 2 ต.พอกน้อย อ.พรรณานิคม จ.สกลนคร)
 - พิกัด: 17.29494, 103.97192 (ที่ราบ)
-- สถานศึกษา: โรงเรียนบ้านสูงเนินสามัคคี (ก่อตั้ง พ.ศ. 2481) สังกัด สพป.สกลนคร เขต 2
+- สถานศึกษา: โรงเรียนบ้านสูงเนินสามัคคี (ก่อตั้ง พ.ศ. 2481)
 - เขื่อนชลประทานน้ำอูน (แหล่งน้ำหลัก)
 - พืชเศรษฐกิจ: ข้าว (กข.6), แตงแคนตาลูป, พริก, ถั่วลิสง, มะเขือเทศ, แตงโม
-- สาธารณสุข: รพ.สต.พอกน้อย, อสม.ในหมู่บ้าน
-- ความปลอดภัย: สถานีตำรวจชุมชนบ้านสูงเนิน
+- สาธารณสุข: รพ.สต.พอกน้อย
 - วัด: วัดไทรทอง
-- ติดต่อ: เทศบาลตำบลพอกน้อย 042-707563, www.poknoi.go.th`;
+- ติดต่อ: เทศบาลตำบลพอกน้อย 042-707563`;
 
 function MessageBubble({ msg }: { msg: ChatMessage }) {
   return (
     <div
-      className={`max-w-[85%] break-words text-sm leading-relaxed px-4 py-3 rounded-2xl ${
+      className={`max-w-[88%] break-words text-sm leading-relaxed px-4 py-3 rounded-2xl ${
         msg.role === "user"
-          ? "bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white ml-auto rounded-br-sm"
-          : "bg-bg-card text-text-primary mr-auto rounded-bl-sm border border-border"
+          ? "bg-gradient-to-r from-[var(--accent-1)] to-[var(--accent-2)] text-white ml-auto rounded-br-sm animate-slideUp"
+          : "bg-[var(--bg-card)] text-[var(--text-primary)] mr-auto rounded-bl-sm border border-[var(--border)] animate-slideUp"
       }`}
     >
       {msg.content}
@@ -34,71 +34,67 @@ export default function ChatBot() {
 
   const handleSend = () => {
     if (!input.trim() || loading) return;
-    const text = input;
+    sendMessage(input, VILLAGE_CONTEXT);
     setInput("");
-    sendMessage(text, VILLAGE_CONTEXT);
   };
 
   return (
     <div className="fixed bottom-6 right-6 z-[1000]">
-      {!open && (
+      {!open ? (
         <button
           onClick={() => setOpen(true)}
-          className="bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white border-none px-7 py-4 rounded-full font-semibold text-base shadow-[0_5px_25px_rgba(102,126,234,0.4)] hover:-translate-y-1 hover:shadow-[0_8px_35px_rgba(102,126,234,0.6)] transition-all duration-300"
+          className="inline-flex items-center gap-2 bg-gradient-to-r from-[var(--accent-1)] to-[var(--accent-2)] text-white border-none px-6 py-3.5 rounded-full font-semibold text-sm shadow-[0_5px_25px_rgba(102,126,234,0.4)] hover:shadow-[0_8px_35px_rgba(102,126,234,0.6)] hover:scale-105 active:scale-95 transition-all duration-300 animate-pulseGlow"
         >
-          💬 ถาม AI
+          <MessageCircle size={20} />
+          ถาม AI
         </button>
-      )}
-
-      {open && (
-        <div className="absolute bottom-[70px] right-0 w-[380px] h-[500px] bg-bg-secondary/85 backdrop-blur-xl rounded-2xl border border-border shadow-2xl flex flex-col overflow-hidden">
-          <div className="bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white px-5 py-4.5 flex justify-between items-center">
-            <span className="font-semibold text-lg">AI สูงเนิน</span>
-            <span className="text-xs bg-white/20 px-2.5 py-1 rounded-full">
-              ✅ SungnoenLLM พร้อมใช้งาน
-            </span>
-            <button
-              onClick={() => setOpen(false)}
-              className="bg-none border-none text-white text-xl cursor-pointer opacity-80 hover:opacity-100 transition-opacity"
-            >
-              ✕
-            </button>
+      ) : (
+        <div className="absolute bottom-20 right-0 w-[360px] sm:w-[400px] h-[520px] bg-[var(--bg-section)] backdrop-blur-2xl rounded-2xl border border-[var(--border)] shadow-2xl flex flex-col overflow-hidden animate-fadeInScale">
+          <div className="bg-gradient-to-r from-[var(--accent-1)] to-[var(--accent-2)] text-white px-5 py-4 flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-2">
+              <MessageCircle size={18} />
+              <span className="font-semibold text-sm">AI สูงเนิน</span>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] bg-white/20 px-2 py-0.5 rounded-full">ออนไลน์</span>
+              <button onClick={() => setOpen(false)} className="text-white/70 hover:text-white transition-colors">
+                <X size={18} />
+              </button>
+            </div>
           </div>
 
-          <div className="flex-1 overflow-y-auto p-5 flex flex-col gap-3">
+          <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3">
             {messages.map((msg, i) => (
               <MessageBubble key={i} msg={msg} />
             ))}
             {loading && (
-              <div className="message ai mr-auto">
-                <div className="flex gap-1.5 py-2.5">
-                  {[0, 1, 2].map((i) => (
-                    <span
-                      key={i}
-                      className="w-2.5 h-2.5 bg-[#667eea] rounded-full animate-bounce"
-                      style={{ animationDelay: `${i * 0.2}s` }}
-                    />
-                  ))}
-                </div>
+              <div className="flex items-center gap-2 mr-auto bg-[var(--bg-card)] px-4 py-3 rounded-2xl border border-[var(--border)]">
+                {[0, 1, 2].map((i) => (
+                  <span
+                    key={i}
+                    className="w-2 h-2 bg-[var(--accent-1)] rounded-full animate-bounce"
+                    style={{ animationDelay: `${i * 0.15}s` }}
+                  />
+                ))}
               </div>
             )}
           </div>
 
-          <div className="flex gap-3 p-4.5 bg-bg-card border-t border-border">
+          <div className="flex gap-2 p-4 bg-[var(--bg-section)] border-t border-[var(--border)] shrink-0">
             <input
               type="text"
               placeholder="พิมพ์ข้อความ..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && (e.preventDefault(), handleSend())}
-              className="flex-1 px-4.5 py-3.5 bg-bg-secondary border border-border rounded-full text-sm text-text-primary focus:outline-none focus:border-[#667eea] focus:shadow-[0_0_20px_rgba(102,126,234,0.3)] transition-all placeholder:text-text-secondary"
+              className="flex-1 px-4 py-2.5 bg-[var(--bg-card)] border border-[var(--border)] rounded-xl text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent-1)] transition-all placeholder:text-[var(--text-secondary)]"
             />
             <button
               onClick={handleSend}
               disabled={loading}
-              className="bg-gradient-to-r from-[#667eea] to-[#764ba2] text-white border-none w-[50px] h-[50px] rounded-full text-xl cursor-pointer shadow-[0_4px_15px_rgba(102,126,234,0.3)] hover:scale-105 hover:shadow-[0_0_25px_rgba(102,126,234,0.5)] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
+              className="bg-gradient-to-r from-[var(--accent-1)] to-[var(--accent-2)] text-white border-none w-[42px] h-[42px] rounded-xl flex items-center justify-center hover:shadow-[0_4px_15px_rgba(102,126,234,0.4)] active:scale-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-300"
             >
-              📤
+              <Send size={16} />
             </button>
           </div>
         </div>

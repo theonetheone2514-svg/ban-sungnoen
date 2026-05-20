@@ -1,6 +1,7 @@
 "use client";
 
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
+import { X } from "lucide-react";
 
 interface ToastItem {
   id: number;
@@ -20,22 +21,26 @@ export function useToast() {
 
 let nextId = 0;
 
+const borders = {
+  success: "border-l-[var(--green)]",
+  error: "border-l-[var(--red)]",
+  info: "border-l-[var(--accent-1)]",
+};
+
+const icons = {
+  success: "✅",
+  error: "❌",
+  info: "ℹ️",
+};
+
 export function ToastProvider({ children }: { children: ReactNode }) {
   const [toasts, setToasts] = useState<ToastItem[]>([]);
 
   const showToast = useCallback((message: string, type: "success" | "error" | "info" = "info") => {
     const id = nextId++;
     setToasts((prev) => [...prev, { id, message, type }]);
-    setTimeout(() => {
-      setToasts((prev) => prev.filter((t) => t.id !== id));
-    }, 3000);
+    setTimeout(() => setToasts((prev) => prev.filter((t) => t.id !== id)), 3200);
   }, []);
-
-  const borderColor = {
-    success: "border-l-green-500",
-    error: "border-l-red-500",
-    info: "border-l-[#667eea]",
-  };
 
   return (
     <ToastContext.Provider value={{ showToast }}>
@@ -44,9 +49,16 @@ export function ToastProvider({ children }: { children: ReactNode }) {
         {toasts.map((t) => (
           <div
             key={t.id}
-            className={`bg-bg-secondary/90 backdrop-blur-xl border border-white/10 text-text-primary px-5 py-3.5 rounded-xl text-sm font-medium shadow-2xl flex items-center gap-2.5 pointer-events-auto max-w-[350px] border-l-4 ${borderColor[t.type]} animate-toastIn`}
+            className={`flex items-center gap-2.5 bg-[var(--bg-section)] backdrop-blur-2xl border border-[var(--border)] text-[var(--text-primary)] px-4 py-3 rounded-xl text-sm font-medium shadow-2xl pointer-events-auto max-w-[360px] border-l-4 ${borders[t.type]} animate-toastIn`}
           >
-            {t.message}
+            <span>{icons[t.type]}</span>
+            <span className="flex-1">{t.message}</span>
+            <button
+              onClick={() => setToasts((prev) => prev.filter((x) => x.id !== t.id))}
+              className="text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors bg-none border-none cursor-pointer p-0"
+            >
+              <X size={14} />
+            </button>
           </div>
         ))}
       </div>
