@@ -44,9 +44,8 @@ export function gregorianToJD(year: number, month: number, day: number): number 
 
 export function getLunarDate(year: number, month: number, day: number): number {
   const jd = gregorianToJD(year, month, day);
-  const d = jd - 2451549.5;
   const lun = 29.530588853;
-  return Math.floor((jd - 2451550.1) / lun) + 1;
+  return Math.floor((jd - 2451550.1) % lun) + 1;
 }
 
 export function getThaiDateString(date: Date) {
