@@ -1,0 +1,11 @@
+{
+  "name": "date-time-chat",
+  "compatibility_date": "2026-05-16",
+  "main": "workers/chat.js",
+  "kv_namespaces": [
+    {
+      "binding": "SOLD_PRODUCTS",
+      "id": "4c2803b37df346b5a4d20314651c462f"
+    }
+  ]
+}

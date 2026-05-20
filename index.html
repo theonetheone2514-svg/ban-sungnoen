@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>บ้านสูงเนิน - ระบบข้อมูลหมู่บ้าน</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏠 บ้านสูงเนิน หมู่ 2 ต.พอกน้อย อ.พรรณานิคม จ.สกลนคร</h1>
+            <button id="refresh-btn" class="refresh-btn ripple">🔄 อัพเดทข้อมูล</button>
+        </header>
+
+        <div class="nav-anchors">
+            <a href="#datetime-section">📍 วันที่</a>
+            <a href="#weather-section">🌤️ อากาศ</a>
+            <a href="#market-section">🛒 ตลาด</a>
+            <a href="#report-section">🚨 ปัญหา</a>
+            <a href="#map-section">📍 แผนที่</a>
+            <a href="#poll-section">📊 โหวต</a>
+        </div>
+
+        <div class="datetime-section animate-in" id="datetime-section">
+            <div class="datetime-box">
+                <div id="datetime" class="datetime"></div>
+                <div id="thai-date" class="thai-date"></div>
+                <div id="lunar-date" class="lunar-date">💬 วันนี้คุณลงขายสินค้า หาตังค์หรือยัง</div>
+                <div id="wan-phra" class="wan-phra"></div>
+                <div id="sakra-info" class="sakra-info"></div>
+                <div id="holiday-info" class="holiday-info"></div>
+            </div>
+        </div>
+
+        <div class="weather-section animate-in" id="weather-section">
+            <div class="weather-box">
+                <h2>🌤️ สภาพอากาศ</h2>
+                <div id="weather" class="weather-info"></div>
+                <div id="temperature" class="temperature"></div>
+                <div id="humidity" class="humidity"></div>
+            </div>
+            <div class="forecast-box">
+                <h3>📅 พยากรณ์อากาศ 7 วัน</h3>
+                <div id="forecast-data" class="forecast-grid"></div>
+            </div>
+        </div>
+
+        <div class="market-section animate-in" id="market-section">
+            <div class="market-header">
+                <h2>🛒 ตลาดสินค้าชุมชน</h2>
+                <div class="market-buttons">
+                    <button id="sell-btn" class="sell-btn" onclick="window.openSellForm()">➕ ลงขาย</button>
+                </div>
+            </div>
+            <div class="market-filters">
+                <input type="text" id="market-search" placeholder="🔍 ค้นหาสินค้า..." oninput="window.filterMarket()">
+                <select id="market-category" onchange="window.filterMarket()"></select>
+            </div>
+            <div id="market-status" class="market-status"></div>
+            <div id="market-grid" class="market-grid"></div>
+        </div>
+
+        <div class="chat-section">
+            <button class="chat-toggle pulse-glow ripple" onclick="window.toggleChat()">💬 ถาม AI</button>
+            <div id="ai-chat-box" class="ai-chat-box">
+                <div class="chat-header">
+                    <span>AI สูงเนิน</span>
+                    <span id="model-status" class="model-status">⏳ กำลังโหลดโมเดล...</span>
+                    <button class="chat-close" onclick="window.toggleChat()">✕</button>
+                </div>
+                <div id="chat-messages" class="chat-messages"></div>
+                <div class="chat-input-area">
+                    <input type="text" id="chat-input" placeholder="พิมพ์ข้อความ..." disabled>
+                    <button id="send-btn" onclick="window.sendMessage()" disabled>📤</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ปุ่มแจ้งปัญหาลอยซ้ายล่าง -->
+        <button class="report-float-btn pulse-glow ripple" onclick="window.openReportForm()">🚨 แจ้งปัญหา</button>
+
+        <!-- Modal แจ้งปัญหา -->
+        <div id="report-modal" class="report-modal" style="display:none">
+            <div class="report-modal-content">
+                <div class="report-modal-header">
+                    <span>🚨 แจ้งปัญหาหมู่บ้าน</span>
+                    <button onclick="window.closeReportForm()">✕</button>
+                </div>
+                <div class="report-modal-body">
+                    <select id="report-type">
+                        <option value="ไฟฟ้า">ไฟฟ้า</option>
+                        <option value="ประปา">ประปา</option>
+                        <option value="ถนน">ถนน</option>
+                        <option value="ขยะ">ขยะ</option>
+                        <option value="อื่นๆ">อื่นๆ</option>
+                    </select>
+                    <textarea id="report-detail" placeholder="รายละเอียดปัญหา..." rows="4"></textarea>
+                    <input type="text" id="report-contact" placeholder="เบอร์ติดต่อ (ไม่บังคับ)">
+                    <label class="report-image-label">
+                        📷 แนบรูปภาพ (ไม่บังคับ)
+                        <input type="file" id="report-image" accept="image/*" style="display:none" onchange="window.previewReportImage(event)">
+                    </label>
+                    <div id="report-image-preview" class="report-image-preview" style="display:none">
+                        <img id="report-image-preview-img" alt="preview">
+                        <span onclick="window.removeReportImage()">✕</span>
+                    </div>
+                    <button class="report-submit-btn" onclick="window.submitReport()">📤 ส่งแจ้งปัญหา</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ส่วนแสดงรายการปัญหา -->
+        <div class="report-section animate-in" id="report-section">
+            <div class="report-header">
+                <h2>🚨 รายงานปัญหาหมู่บ้าน</h2>
+            </div>
+            <div id="report-list" class="report-list"></div>
+        </div>
+
+        <div class="map-section animate-in" id="map-section">
+            <div class="map-header">
+                <h2>📍 แผนที่หมู่บ้าน</h2>
+            </div>
+            <div class="map-embed">
+                <iframe src="https://www.google.com/maps/d/embed?mid=14LMRO5b8R5hqnD1kcKXPA8W8UwYutL8" width="100%" height="450" style="border:0;" allowfullscreen loading="lazy"></iframe>
+            </div>
+            <div class="map-legend">
+                <span>📍 วัดไทรทอง</span>
+                <span>📍 โรงเรียนบ้านสูงเนินสามัคคี</span>
+                <span>📍 รพ.สต.พอกน้อย</span>
+                <span>📍 ที่ทำการผู้ใหญ่บ้าน</span>
+            </div>
+        </div>
+
+        <div class="poll-section animate-in" id="poll-section">
+            <div class="poll-header">
+                <h2>📊 แบบสำรวจความคิดเห็น</h2>
+            </div>
+            <div id="poll-body" class="poll-body"></div>
+        </div>
+    </div>
+
+    <script type="module">
+        let isModelLoaded = false;
+        let currentWeather = '';
+        let currentLunar = '';
+        let marketProducts = [];
+        let reportsList = [];
+        let pollData = null;
+        
+        window.toggleChat = async function() {
+            const box = document.getElementById('ai-chat-box');
+            box.classList.toggle('show');
+            
+            if (box.classList.contains('show') && !isModelLoaded) {
+                await initChat();
+            }
+        };
+
+        window.sendMessage = async function() {
+            const input = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-btn');
+            if (!input || !sendBtn) return;
+            
+            const message = input.value.trim();
+            
+            if (!message || !isModelLoaded) return;
+            
+            addMessage(message, 'user');
+            input.value = '';
+            sendBtn.disabled = true;
+            
+            showTyping();
+            
+            try {
+                const villageInfo = `📍 ข้อมูลบ้านสูงเนิน (หมู่ 2 ต.พอกน้อย อ.พรรณานิคม จ.สกลนคร)
+- พิกัด: 17.29494, 103.97192 (ที่ราบ)
+- สถานศึกษา: โรงเรียนบ้านสูงเนินสามัคคี (ก่อตั้ง พ.ศ. 2481) สังกัด สพป.สกลนคร เขต 2
+- เขื่อนชลประทานน้ำอูน (แหล่งน้ำหลัก)
+- พืชเศรษฐกิจ: ข้าว (กข.6), แตงแคนตาลูป, พริก, ถั่วลิสง, มะเขือเทศ, แตงโม
+- สาธารณสุข: รพ.สต.พอกน้อย, อสม.ในหมู่บ้าน
+- ความปลอดภัย: สถานีตำรวจชุมชนบ้านสูงเนิน
+- วัด: วัดไทรทอง
+- ติดต่อ: เทศบาลตำบลพอกน้อย 042-707563, www.poknoi.go.th`;
+
+                const now = new Date();
+                const currentTime = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+                let extra = '';
+                if (marketProducts.length) {
+                    extra += `\n📦 สินค้าชุมชน: ${marketProducts.slice(0, 5).map(p => `${p['ชื่อสินค้า']} ${p['ราคา']}฿`).join(', ')}`;
+                }
+                const activeReports = reportsList.filter(r => r.status !== 'done').slice(0, 3);
+                if (activeReports.length) {
+                    extra += `\n🚨 ปัญหาหมู่บ้าน: ${activeReports.map(r => `${r.type} - ${r.detail}`).join(' | ')}`;
+                }
+                if (pollData?.total > 0) {
+                    const top = Object.entries(pollData.options).sort((a, b) => b[1] - a[1])[0];
+                    extra += `\n📊 โหวต "${pollData.question}" อันดับ 1: ${top[0]} (${top[1]} โหวต)`;
+                }
+                const holiday = document.getElementById('holiday-info')?.textContent;
+                if (holiday) extra += `\n🎉 ${holiday}`;
+                const context = `ขณะนี้: ${currentLunar} เวลา ${currentTime} น.${extra}\nสถานที่: บ้านสูงเนิน ต.พอกน้อย อ.พรรณานิคม จ.สกลนคร\n${villageInfo}\n\nสภาพอากาศปัจจุบัน: ${currentWeather}`;
+                
+                const response = await fetch('https://date-time-chat.iamfineder.workers.dev', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        model: MODEL_NAME,
+                        messages: [
+                            { role: 'system', content: `คุณคือผู้ช่วย AI ของหมู่บ้านบ้านสูงเนิน ต.พอกน้อย อ.พรรณานิคม จ.สกลนคร\n\n${context}\n\nกรุณาตอบเป็นภาษาไทย ใช้คำที่เข้าใจง่าย และให้ข้อมูลที่เป็นประโยชน์ต่อชุมชน` },
+                            ...getChatHistory(),
+                            { role: 'user', content: message }
+                        ],
+                        temperature: 0.7,
+                        max_tokens: 1000
+                    })
+                });
+
+                if (!response.ok) throw new Error('API Error: ' + response.status);
+
+                const data = await response.json();
+                const aiMessage = data.choices?.[0]?.message?.content || 'ไม่ได้รับคำตอบ';
+                
+                hideTyping();
+                addMessage(stripThinkTags(aiMessage), 'ai');
+            } catch (error) {
+                hideTyping();
+                console.error('Chat error:', error);
+                addMessage('เกิดข้อผิดพลาด: ' + error.message, 'ai');
+            }
+            
+            sendBtn.disabled = false;
+            if (input) input.focus();
+        };
+
+        let chatHistory = [];
+
+        function getChatHistory() {
+            return chatHistory.slice(-5).map(msg => ({
+                role: msg.role,
+                content: msg.content
+            }));
+        }
+
+        function stripThinkTags(text) {
+            return text.replace(/<think>[\s\S]*?<\/think>/g, '').trim();
+        }
+
+        function addMessage(content, role) {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+            
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+            msgDiv.textContent = content;
+            container.appendChild(msgDiv);
+            container.scrollTop = container.scrollHeight;
+            
+            chatHistory.push({ role, content: role === 'ai' ? stripThinkTags(content) : content });
+        }
+
+        function showTyping() {
+            const container = document.getElementById('chat-messages');
+            if (!container) return;
+            
+            const typingMsg = document.createElement('div');
+            typingMsg.className = 'message ai typing';
+            typingMsg.id = 'typing-indicator';
+            typingMsg.innerHTML = '<div class="typing-indicator"><span></span><span></span><span></span></div>';
+            container.appendChild(typingMsg);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function hideTyping() {
+            const typingMsg = document.getElementById('typing-indicator');
+            if (typingMsg) typingMsg.remove();
+        }
+
+        const chatInput = document.getElementById('chat-input');
+        if (chatInput) {
+            chatInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    window.sendMessage();
+                }
+            });
+        }
+
+        const MODEL_NAME = 'pathumma-thaillm-qwen3-8b-think-3.0.0';
+
+        async function initChat() {
+            const status = document.getElementById('model-status');
+            const input = document.getElementById('chat-input');
+            const sendBtn = document.getElementById('send-btn');
+            
+            isModelLoaded = true;
+            if (status) {
+                status.textContent = '✅ SungnoenLLM พร้อมใช้งาน';
+                status.className = 'model-status success';
+            }
+            if (input) input.disabled = false;
+            if (sendBtn) sendBtn.disabled = false;
+        }
+
+        // ==================== วันที่/เวลา ====================
+        window.updateDateTime = function() {
+            const now = new Date();
+            const options = { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit',
+                hour12: false
+            };
+            const datetimeEl = document.getElementById('datetime');
+            if (datetimeEl) datetimeEl.textContent = now.toLocaleDateString('th-TH', options);
+        };
+
+        // ==================== สภาพอากาศ ====================
+        window.fetchWeather = async function() {
+            const weatherEl = document.getElementById('weather');
+            const tempEl = document.getElementById('temperature');
+            const humidEl = document.getElementById('humidity');
+            
+            try {
+                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=17.29494&longitude=103.97192&current=temperature_2m,relative_humidity_2m,weather_code&timezone=Asia/Bangkok');
+                const data = await response.json();
+                
+                const temp = data.current?.temperature_2m;
+                const humid = data.current?.relative_humidity_2m;
+                const code = data.current?.weather_code;
+                
+                const weatherMap = {
+                    0: '☀️ ท้องฟ้าแจ่มใส',
+                    1: '🌤️ ท้องฟ้าแจ่ม',
+                    2: '⛅ มีเมฆบางส่วน',
+                    3: '☁️ ท้องฟ้ามืดครึ้ม',
+                    45: '🌫️ หมอก',
+                    48: '🌫️ หมอก',
+                    51: '🌧️ ฝนเล็กน้อย',
+                    53: '🌧️ ฝนปานกลาง',
+                    55: '🌧️ ฝนหนัก',
+                    61: '🌧️ ฝนเล็กน้อย',
+                    63: '🌧️ ฝนปานกลาง',
+                    65: '🌧️ ฝนหนัก',
+                    80: '🌦️ ฝนเพลา',
+                    81: '🌧️ ฝนปานกลาง',
+                    82: '⛈️ ฝนหนัก'
+                };
+                
+                const weatherText = weatherMap[code] || 'ไม่ทราบ';
+                currentWeather = `${weatherText} อุณหภูมิ ${temp}°C ความชื้น ${humid}%`;
+                
+                if (weatherEl) weatherEl.textContent = weatherText;
+                if (tempEl) tempEl.textContent = `🌡️ ${temp}°C`;
+                if (humidEl) humidEl.textContent = `💧 ${humid}%`;
+            } catch (error) {
+                console.error('Weather error:', error);
+                if (weatherEl) weatherEl.textContent = 'ไม่สามารถดึงข้อมูลสภาพอากาศได้';
+                if (tempEl) tempEl.textContent = '🌡️ ไม่สามารถดึงอุณหภูมิได้';
+                if (humidEl) humidEl.textContent = '💧 ไม่สามารถดึงความชื้นได้';
+            }
+        };
+
+        window.fetchForecast = async function() {
+            const forecastEl = document.getElementById('forecast-data');
+            if (!forecastEl) return;
+            
+            try {
+                const response = await fetch('https://api.open-meteo.com/v1/forecast?latitude=17.29494&longitude=103.97192&daily=weather_code,temperature_2m_max,temperature_2m_min&timezone=Asia/Bangkok&forecast_days=7');
+                const data = await response.json();
+                
+                if (!data.daily) {
+                    forecastEl.style.display = 'none';
+                    forecastEl.textContent = 'ไม่สามารถดึงข้อมูลพยากรณ์อากาศได้';
+                    return;
+                }
+                
+                forecastEl.innerHTML = '';
+                const weatherIcons = { 0: '☀️', 1: '🌤️', 2: '⛅', 3: '☁️', 45: '🌫️', 48: '🌫️', 51: '🌧️', 53: '🌧️', 55: '🌧️', 61: '🌧️', 63: '🌧️', 65: '🌧️', 80: '🌦️', 81: '🌧️', 82: '⛈️' };
+                
+                const days = ['อา.', 'จ.', 'อ.', 'พ.', 'พฤ.', 'ศ.', 'ส.'];
+                
+                for (let i = 0; i < data.daily.time.length; i++) {
+                    const date = new Date(data.daily.time[i]);
+                    const dayName = i === 0 ? 'วันนี้' : days[date.getDay()];
+                    const icon = weatherIcons[data.daily.weather_code[i]] || '🌤️';
+                    const tempMax = Math.round(data.daily.temperature_2m_max[i]);
+                    const tempMin = Math.round(data.daily.temperature_2m_min[i]);
+                    
+                    const dayDiv = document.createElement('div');
+                    dayDiv.className = 'forecast-day';
+                    dayDiv.innerHTML = `
+                        <div class="day-name">${dayName}</div>
+                        <div class="weather">${icon}</div>
+                        <div class="temp">${tempMax}° / ${tempMin}°</div>
+                    `;
+                    forecastEl.appendChild(dayDiv);
+                }
+            } catch (error) {
+                console.error('Forecast error:', error);
+                forecastEl.style.display = 'none';
+                forecastEl.textContent = 'ไม่สามารถดึงข้อมูลพยากรณ์อากาศได้';
+            }
+        };
+
+        // ==================== ปฏิทินไทย ====================
+        function getLunarDate(year, month, day) {
+            const C = 2435008;
+            const jd = gregorianToJD(year, month, day);
+            const d = jd - 2451549.5;
+            const lun = 29.530588853;
+            const newmoon = Math.floor(d / lun) * lun;
+            const nextnm = newmoon + lun * Math.ceil((d - newmoon) / lun);
+            return Math.floor((jd - 2451550.1) / lun) + 1;
+        }
+
+        function gregorianToJD(year, month, day) {
+            if (month <= 2) { year -= 1; month += 12; }
+            const a = Math.floor(year / 100);
+            const b = 2 - a + Math.floor(a / 4);
+            return Math.floor(365.25 * (year + 4716)) + Math.floor(30.6001 * (month + 1)) + day + b - 1524.5;
+        }
+
+        window.updateLunarCalendar = function() {
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            
+            const thaiMonths = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+            const thaiYear = year + 543;
+            const thaiDateStr = `${day} ${thaiMonths[month - 1]} พ.ศ. ${thaiYear}`;
+            
+            const lunarPhase = getLunarDate(year, month, day);
+            const lunarCycle = 30;
+            const isWaxing = lunarPhase <= 15;
+            const moonEmoji = isWaxing ? '🌒' : '🌘';
+            const lunarText = isWaxing ? `ข้างขึ้น ${lunarPhase}/15` : `ข้างแรม ${lunarPhase - 15}/15`;
+            const thaiMonthNum = Math.ceil(lunarPhase / 15);
+            
+            const wanPhraMap = { 1: 'วันพระศุกร์', 8: 'วันพระวิสาข์', 15: 'วันพระขึ้น 15 ค่ำ', 23: 'วันพระวิสาข์' };
+            const dayOfMoon = lunarPhase;
+            const wanPhra = wanPhraMap[dayOfMoon] || '';
+            
+            const chulaSakarat = thaiYear - 1181;
+            const yearCE = year;
+            const mahaSakarat = yearCE + 638;
+            const rattanakosinSakarat = thaiYear - 2325;
+            const suriyakati = (yearCE + 543) % 60;
+            const chantrakati = Math.floor((yearCE + 543) / 100) + 1;
+            
+            const thaiDateEl = document.getElementById('thai-date');
+            const wanPhraEl = document.getElementById('wan-phra');
+            const sakraEl = document.getElementById('sakra-info');
+            const holidayEl = document.getElementById('holiday-info');
+            
+            if (thaiDateEl) thaiDateEl.textContent = thaiDateStr;
+            if (wanPhraEl) wanPhraEl.textContent = `${moonEmoji} ${wanPhra}`;
+            if (sakraEl) sakraEl.textContent = `จ.ศ. ${chulaSakarat} | ค.ศ. ${yearCE} | ม.ศ. ${mahaSakarat} | ร.ศ. ${rattanakosinSakarat} | ${suriyakati}, ${chantrakati}`;
+            
+            const holidays = {
+                '1-1': '🎆 วันปีใหม่ไทย',
+                '13-4': '🎉 สงกรานต์',
+                '14-4': '🎉 สงกรานต์',
+                '15-4': '🎉 สงกรานต์',
+                '1-5': '🎁 วันแรงงานแห่งชาติ',
+                '5-5': '🎈 วันเฉลิมพระชนมพรรษาพระบาทสมเด็จพระบรมชนกาธิเบศร มหาภูมิพลอดุลยเดชมหาราชบรมนาถบพิตร',
+                '11-5': '💒 วันฉัตรมงคล',
+                '12-8': '🎓 วันแม่',
+                '23-10': '🏛️ วันปิยมหาการณ์ยุคล บรรจบศักดิ์สิทธิ์',
+                '5-12': '🎂 วันพระราชทานนามกันชน',
+                '10-12': '🎊 วันรัฐธรรมนูญ',
+                '31-12': '🎆 วันสิ้นปี'
+            };
+            
+            const todayKey = `${day}-${month}`;
+            const holiday = holidays[todayKey] || '';
+            
+            if (holidayEl) {
+                holidayEl.textContent = holiday;
+                if (holiday) { holidayEl.className = 'holiday-info holiday'; }
+            }
+            
+            currentLunar = `${thaiDateStr} | ${lunarText}`;
+        };
+
+        // ==================== ตลาดสินค้า ====================
+        window.openSellForm = function() {
+            window.open('https://docs.google.com/forms/d/e/1FAIpQLSeUwS6XvgfAPG7XxTx5gdg26FLi29t3dzGFMfCez9j9UWxMTA/viewform?usp=dialog', '_blank');
+        };
+
+        function showMarketSkeleton() {
+            const grid = document.getElementById('market-grid');
+            if (!grid) return;
+            grid.innerHTML = '<div class="skeleton-grid">' + Array(4).fill('<div class="skeleton-grid-item"></div>').join('') + '</div>';
+        }
+
+        async function loadMarketProducts() {
+            const grid = document.getElementById('market-grid');
+            const status = document.getElementById('market-status');
+            if (!grid || !status) return;
+            
+            showMarketSkeleton();
+            status.textContent = '';
+            
+            try {
+                const response = await fetch('https://date-time-market.iamfineder.workers.dev/');
+                const data = await response.json();
+                marketProducts = data.products || [];
+                populateCategories();
+                renderMarketProducts(marketProducts);
+                status.textContent = `พบสินค้า ${marketProducts.length} รายการ`;
+            } catch (error) {
+                console.error('Market error:', error);
+                status.textContent = '❌ ไม่สามารถโหลดสินค้าได้';
+            }
+        }
+
+        function populateCategories() {
+            const select = document.getElementById('market-category');
+            if (!select) return;
+            const categories = [...new Set(marketProducts.map(p => p['หมวดหมู่'] || 'ทั่วไป'))];
+            select.innerHTML = '<option value="ทั้งหมด">ทั้งหมด</option>';
+            categories.forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                opt.textContent = cat;
+                select.appendChild(opt);
+            });
+        }
+
+        function renderMarketProducts(products) {
+            const grid = document.getElementById('market-grid');
+            if (!grid) return;
+            grid.innerHTML = '';
+            
+            products.forEach(product => {
+                const card = document.createElement('div');
+                card.className = 'product-card';
+                
+                const id = product.id || '';
+                const name = product['ชื่อสินค้า'] || 'ไม่มีชื่อสินค้า';
+                const category = product['หมวดหมู่'] || 'ทั่ไป';
+                const price = product['ราคา'] || '0';
+                const unit = product['หน่วย'] || 'ชิ้น';
+                const lineId = product['LINE ID'] || '';
+                const details = product['"รายละเอียด" (ไม่บังคับ)'] || product['รายละเอียด'] || '-';
+                
+                card.className = 'product-card animate-in';
+                card.innerHTML = `
+                    <div class="product-name">${name}</div>
+                    <span class="product-category">${category}</span>
+                    <div class="product-price">฿${price} <span class="product-unit">/ ${unit}</span></div>
+                    <div class="product-details">${details}</div>
+                    <div class="product-actions">
+                        <button class="order-btn ripple" onclick="window.open('https://line.me/ti/p/~${lineId.replace('@','')}', '_blank')">📱 สั่งซื้อ</button>
+                        <button class="sold-btn ripple" onclick="window.markSold('${id}', this)">🚫 ขายแล้ว</button>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        window.filterMarket = function() {
+            const searchInput = document.getElementById('market-search');
+            const categoryInput = document.getElementById('market-category');
+            if (!searchInput || !categoryInput) return;
+            
+            const searchText = searchInput.value.toLowerCase();
+            const selectedCategory = categoryInput.value;
+            
+            const filtered = marketProducts.filter(product => {
+                const name = (product['ชื่อสินค้า'] || '').toLowerCase();
+                const category = product['หมวดหมู่'] || 'ทั่วไป';
+                const details = (product['"รายละเอียด" (ไม่บังคับ)'] || product['รายละเอียด'] || '').toLowerCase();
+                
+                const matchesSearch = name.includes(searchText) || details.includes(searchText);
+                const matchesCategory = selectedCategory === 'ทั้งหมด' || category === selectedCategory;
+                
+                return matchesSearch && matchesCategory;
+            });
+            
+            renderMarketProducts(filtered);
+            const status = document.getElementById('market-status');
+            if (status) status.textContent = `พบสินค้า ${filtered.length} จากทั้งหมด ${marketProducts.length} รายการ`;
+        };
+
+        window.markSold = async function(id, btn) {
+            if (!confirm('ยืนยันว่าสินค้านี้ขายแล้ว?')) return;
+            try {
+                const res = await fetch('https://date-time-market.iamfineder.workers.dev/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                if (!res.ok) throw new Error('API Error');
+                marketProducts = marketProducts.filter(p => p.id !== id);
+                const card = btn.closest('.product-card');
+                if (card) card.remove();
+                const status = document.getElementById('market-status');
+                if (status) status.textContent = `พบสินค้า ${marketProducts.length} รายการ`;
+            } catch (error) {
+                showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+            }
+        };
+
+        // ==================== ระบบแจ้งปัญหา ====================
+        window.openReportForm = function() {
+            document.getElementById('report-modal').style.display = 'flex';
+        };
+
+        window.closeReportForm = function() {
+            document.getElementById('report-modal').style.display = 'none';
+        };
+
+        let reportImageData = null;
+
+        window.previewReportImage = function(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                reportImageData = ev.target.result;
+                const preview = document.getElementById('report-image-preview');
+                const img = document.getElementById('report-image-preview-img');
+                img.src = reportImageData;
+                preview.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        };
+
+        window.removeReportImage = function() {
+            reportImageData = null;
+            document.getElementById('report-image').value = '';
+            document.getElementById('report-image-preview').style.display = 'none';
+        };
+
+        window.submitReport = async function() {
+            const type = document.getElementById('report-type').value;
+            const detail = document.getElementById('report-detail').value.trim();
+            const contact = document.getElementById('report-contact').value.trim();
+            if (!detail) { showToast('กรุณากรอกรายละเอียดปัญหา', 'error'); return; }
+            try {
+                const body = { type, detail, contact };
+                if (reportImageData) body.image = reportImageData;
+                const res = await fetch('https://date-time-market.iamfineder.workers.dev/report', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                if (!res.ok) throw new Error('ส่งไม่สำเร็จ');
+                document.getElementById('report-detail').value = '';
+                document.getElementById('report-contact').value = '';
+                window.removeReportImage();
+                window.closeReportForm();
+                await loadReports();
+            } catch (error) {
+                showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+            }
+        };
+
+        window.loadReports = async function() {
+            const container = document.getElementById('report-list');
+            if (!container) return;
+            container.innerHTML = Array(3).fill('<div class="skeleton-list-item"></div>').join('');
+            try {
+                const res = await fetch('https://date-time-market.iamfineder.workers.dev/reports');
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                reportsList = data.reports;
+                container.innerHTML = '';
+                if (data.reports.length === 0) {
+                    container.innerHTML = '<div class="report-empty">ยังไม่มีรายงานปัญหา</div>';
+                    return;
+                }
+                data.reports.forEach(r => {
+                    const statusMap = { 'pending': '🔴 รอดำเนินการ', 'in_progress': '🟡 กำลังดำเนินการ', 'done': '🟢 ดำเนินการเสร็จ' };
+                    const statusText = statusMap[r.status] || r.status;
+                    const isDone = r.status === 'done';
+                    const div = document.createElement('div');
+                    div.className = 'report-item animate-in';
+                    div.innerHTML = `
+                        <div class="report-top">
+                            <span class="report-type-badge">${r.type}</span>
+                            <span class="report-status status-${r.status}">${statusText}</span>
+                        </div>
+                        <div class="report-detail-text">${r.detail}</div>
+                        ${r.image ? `<img class="report-image-thumb" src="${r.image}" alt="รูปประกอบ" onclick="window.open('${r.image}', '_blank')">` : ''}
+                        <div class="report-bottom">
+                            <span class="report-date">${r.date}</span>
+                            ${!isDone ? `<button class="report-done-btn" onclick="window.updateReportStatus('${r.id}')">✅ เสร็จแล้ว</button>` : ''}
+                            ${r.contact ? `<span class="report-contact">📞 ${r.contact}</span>` : ''}
+                        </div>
+                    `;
+                    container.appendChild(div);
+                });
+            } catch (error) {
+                console.error('Load reports error:', error);
+            }
+        };
+
+        window.updateReportStatus = async function(id) {
+            try {
+                const res = await fetch('https://date-time-market.iamfineder.workers.dev/report/status', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id })
+                });
+                if (!res.ok) throw new Error('อัปเดตไม่สำเร็จ');
+                await loadReports();
+            } catch (error) {
+                showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+            }
+        };
+
+        // ==================== ระบบโหวต ====================
+        let selectedOption = '';
+
+        window.loadPoll = async function() {
+            const container = document.getElementById('poll-body');
+            if (!container) return;
+            container.innerHTML = '<div class="skeleton-text" style="height:40px;margin-bottom:16px"></div>' + Array(4).fill('<div class="skeleton-text" style="height:50px;margin-bottom:8px"></div>').join('') + '<div class="skeleton-text short" style="height:44px;margin-top:12px"></div>';
+            try {
+                const res = await fetch('https://date-time-market.iamfineder.workers.dev/poll');
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                pollData = data;
+
+                const { question, options, total } = data;
+                let html = `<div class="poll-question">${question}</div><div class="poll-options">`;
+
+                for (const [opt, count] of Object.entries(options)) {
+                    const pct = total > 0 ? Math.round((count / total) * 100) : 0;
+                    html += `
+                        <div class="poll-option animate-in" onclick="window.selectOption('${opt}')" data-opt="${opt}">
+                            <div class="poll-option-label">
+                                <span class="poll-check"></span>
+                                <span>${opt}</span>
+                            </div>
+                            <div class="poll-bar-bg">
+                                <div class="poll-bar-fill" style="width:${pct}%"></div>
+                            </div>
+                            <span class="poll-count">${count} โหวต (${pct}%)</span>
+                        </div>
+                    `;
+                }
+
+                html += `</div>`;
+                html += `<button class="poll-vote-btn" onclick="window.votePoll()">📤 โหวต</button>`;
+                html += `<div class="poll-total">โหวตทั้งหมด: ${total} ครั้ง</div>`;
+                container.innerHTML = html;
+                selectedOption = '';
+            } catch (error) {
+                console.error('Load poll error:', error);
+            }
+        };
+
+        window.selectOption = function(opt) {
+            document.querySelectorAll('.poll-option').forEach(el => {
+                el.classList.toggle('selected', el.dataset.opt === opt);
+            });
+            selectedOption = opt;
+        };
+
+        window.votePoll = async function() {
+            if (!selectedOption) {
+                showToast('กรุณาเลือกตัวเลือกก่อน', 'error');
+                return;
+            }
+            try {
+                const res = await fetch('https://date-time-market.iamfineder.workers.dev/poll/vote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ option: selectedOption })
+                });
+                if (!res.ok) throw new Error('โหวตไม่สำเร็จ');
+                await loadPoll();
+            } catch (error) {
+                showToast('เกิดข้อผิดพลาด: ' + error.message, 'error');
+            }
+        };
+
+        // เริ่มต้นการทำงานหน้าเว็บทั้งหมด
+        window.updateDateTime();
+        setInterval(window.updateDateTime, 1000);
+        window.fetchWeather();
+        window.fetchForecast();
+        window.updateLunarCalendar();
+        
+        const refreshBtn = document.getElementById('refresh-btn');
+        if (refreshBtn) {
+            refreshBtn.addEventListener('click', () => {
+                window.fetchWeather();
+                window.fetchForecast();
+                window.updateLunarCalendar();
+                const marketSection = document.getElementById('market-section');
+                if (marketSection && marketSection.style.display !== 'none' && marketSection.style.display !== '') {
+                    loadMarketProducts();
+                }
+            });
+        }
+
+        loadMarketProducts();
+        loadReports();
+        loadPoll();
+
+        // ==================== Toast ====================
+        window.showToast = function(message, type = 'info') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.textContent = message;
+            container.appendChild(toast);
+            setTimeout(() => toast.remove(), 3000);
+        };
+
+        // ==================== Scroll-to-top ====================
+        const scrollBtn = document.getElementById('scroll-top-btn');
+        window.addEventListener('scroll', () => {
+            if (window.scrollY > 500) {
+                scrollBtn.classList.add('show');
+            } else {
+                scrollBtn.classList.remove('show');
+            }
+        });
+        scrollBtn.addEventListener('click', () => {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    </script>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Scroll-to-top -->
+    <button id="scroll-top-btn" title="กลับด้านบน">⬆</button>
+</body>
+</html>
